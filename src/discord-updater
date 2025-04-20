@@ -1,0 +1,65 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+# Check if dpkg is available (only works on Debian-based systems)
+if ! command -v dpkg >/dev/null 2>&1; then
+	echo "❌ This script only works on Debian-based systems (Ubuntu, Linux Mint, etc)."
+	exit 1
+fi
+
+TEMP_DIR="$HOME/.tempcache"
+DISCORD_URL="https://discord.com/api/download/stable?platform=linux&format=deb"
+DEB_FILE="$TEMP_DIR/discord.deb"
+
+echo "🔍 Checking current installed version of Discord..."
+if command -v discord >/dev/null 2>&1; then
+	CURRENT_VERSION=$(dpkg -s discord 2>/dev/null | grep '^Version:' | awk '{print $2}')
+	echo "🧾 Installed version: $CURRENT_VERSION"
+else
+	echo "⚠️ Discord is not installed. Will install it now."
+	CURRENT_VERSION="none"
+fi
+
+echo "🌐 Fetching latest version info from Discord..."
+LATEST_DEB_URL=$(wget -q --server-response --max-redirect=0 "$DISCORD_URL" 2>&1 | grep -i "location:" | awk '{print $2}' | tr -d '\r')
+LATEST_VERSION=$(basename "$LATEST_DEB_URL" | grep -oP '[0-9]+\.[0-9]+\.[0-9]+')
+
+if [ -z "$LATEST_VERSION" ]; then
+	echo "❌ Failed to determine the latest version of Discord."
+	exit 1
+fi
+
+echo "🆕 Latest available version: $LATEST_VERSION"
+
+if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
+	echo "✅ You already have the latest version of Discord."
+	read -r -p "Do you still want to reinstall it? (y/n): " confirm
+	[[ "$confirm" =~ ^[Yy]$ ]] || exit 0
+else
+	echo "⬆️ Updating Discord to version $LATEST_VERSION..."
+fi
+
+echo "📁 Creating temporary folder at $TEMP_DIR..."
+mkdir -p "$TEMP_DIR"
+trap "rm -rf '$TEMP_DIR'" EXIT
+
+echo "📥 Downloading Discord .deb package..."
+wget -q --show-progress -O "$DEB_FILE" "$DISCORD_URL"
+
+echo "📦 Installing Discord (you might be prompted for your password)..."
+if sudo dpkg -i "$DEB_FILE" >/dev/null 2>&1; then
+	echo "✅ Installed successfully with dpkg."
+else
+	echo "⚠️ Missing dependencies detected. Fixing..."
+	sudo apt -f install -y >/dev/null
+	echo "✅ Installation completed after fixing dependencies."
+fi
+
+if [ "$CURRENT_VERSION" = "none" ]; then
+	echo "🎉 Done! Discord version $LATEST_VERSION is now installed."
+else
+	echo "🎉 Done! Discord is now updated version $CURRENT_VERSION => $LATEST_VERSION."
+fi
+
+# Made by Anurag Bansal <https://github.com/Anurag-Bansal1>

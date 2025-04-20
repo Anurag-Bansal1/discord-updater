@@ -1,0 +1,7 @@
+Package: discord-updater
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: all
+Maintainer: Anurag Bansal <https://github.com/Anurag-Bansal1>
+Description: A command to install/update Discord on Debian-based systems.

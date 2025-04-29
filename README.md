@@ -1,4 +1,4 @@
-#Updater for Discord
+# Updater for Discord
 
 A straightforward bash script that installs, updates, or reinstalls Discord only on Linux distributions based on Debian, such as Ubuntu or Linux Mint.
 

@@ -8,11 +8,47 @@ if ! command -v dpkg >/dev/null 2>&1; then
 	exit 1
 fi
 
-TEMP_DIR="$HOME/.tempcache"
-DISCORD_URL="https://discord.com/api/download/stable?platform=linux&format=deb"
-DEB_FILE="$TEMP_DIR/discord.deb"
+print_help() {
+	cat <<EOF
+Discord Updater – Installs or updates Discord on Debian-based systems.
 
-echo "🔍 Checking current installed version of Discord..."
+Usage:
+  discord-updater [options]
+
+Options:
+  -y, --yes, -f, --force    Skip confirmation prompt (reinstall even if up to date)
+  -t, --test                Execute a dry run to check versions
+  -h, --help                Show this help message
+
+Examples:
+  ./discord-updater         # Normal usage
+  ./discord-updater -y      # Force reinstall if latest is already installed
+
+Made by Anurag Bansal <https://github.com/Anurag-Bansal1>
+EOF
+	exit 0
+}
+
+# Parse flags
+FORCE=false
+DRY_RUN=false
+
+for arg in "$@"; do
+	case "$arg" in
+		-y|--yes|-f|--force) FORCE=true ;;
+		-t|--test) DRY_RUN=true ;;
+		-h|--help) print_help ;;
+	esac
+done
+
+# Help message
+
+
+TEMP_DIR="/dev/shm/discord-updater"
+DEB_FILE="$TEMP_DIR/discord.deb"
+DISCORD_URL="https://discord.com/api/download/stable?platform=linux&format=deb"
+
+echo "🔍 Checking currently installed version of Discord..."
 if command -v discord >/dev/null 2>&1; then
 	CURRENT_VERSION=$(dpkg -s discord 2>/dev/null | grep '^Version:' | awk '{print $2}')
 	echo "🧾 Installed version: $CURRENT_VERSION"
@@ -32,15 +68,36 @@ fi
 
 echo "🆕 Latest available version: $LATEST_VERSION"
 
+if [ "$DRY_RUN" = true ]; then
+	echo "🚫 Dry run mode active. No changes will be made."
+	if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
+		echo "✅ Discord is already up to date (v$CURRENT_VERSION)."
+	else
+		echo "⬆️ Discord can be updated from $CURRENT_VERSION to $LATEST_VERSION"
+	fi
+	exit 0
+fi
+
 if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
 	echo "✅ You already have the latest version of Discord."
-	read -r -p "Do you still want to reinstall it? (y/n): " confirm
-	[[ "$confirm" =~ ^[Yy]$ ]] || exit 0
+	if [ "$FORCE" = false ]; then
+		while true; do
+			read -r -p "Do you still want to reinstall it? (Y/n): " confirm
+			confirm=${confirm:-y}
+			case "$confirm" in
+				[Yy]) break ;;
+				[Nn]) exit 0 ;;
+				*) echo "Please answer with 'y' or 'n'." ;;
+			esac
+		done
+	else
+		echo "🔁 Reinstalling discord."
+	fi
 else
 	echo "⬆️ Updating Discord to version $LATEST_VERSION..."
 fi
 
-echo "📁 Creating temporary folder at $TEMP_DIR..."
+echo "📁 Creating temporary folder to avoid any conflict..."
 mkdir -p "$TEMP_DIR"
 trap "rm -rf '$TEMP_DIR'" EXIT
 
@@ -59,7 +116,7 @@ fi
 if [ "$CURRENT_VERSION" = "none" ]; then
 	echo "🎉 Done! Discord version $LATEST_VERSION is now installed."
 else
-	echo "🎉 Done! Discord is now updated version $CURRENT_VERSION => $LATEST_VERSION."
+	echo "🎉 Done! Discord updated: $CURRENT_VERSION → $LATEST_VERSION."
 fi
 
 # Made by Anurag Bansal <https://github.com/Anurag-Bansal1>

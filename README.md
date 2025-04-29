@@ -1,25 +1,21 @@
-# Discord Updater
+#Updater for Discord
 
-A simple bash script that installs/updates (or reinstalls) Discord on Debian-based Linux distros like Ubuntu or Linux Mint.
+A straightforward bash script that installs, updates, or reinstalls Discord only on Linux distributions based on Debian, such as Ubuntu or Linux Mint.
 
 ## Features
 
-- 🧾 Checks installed version
-- 🌐 Fetches latest release from Discord
-- 📦 Installs `.deb` package using `dpkg`
-- ✅ Handles missing dependencies
-- 🧹 Cleans up after install
+Verifies the installed version, retrieves the most recent version from Discord; uses `dpkg` to install the `.deb` package.
+Addresses missing dependencies and cleans up after installation.
 
-## Usage
+## Application
 
 ```bash
 discord-updater
 ```
 
-## Installation
+## Setup
 
-Download the `.deb` file from releases and install:
-
+Install the `.deb` file after downloading it from releases:
 ```bash
 sudo dpkg -i discord-updater.deb
 ```

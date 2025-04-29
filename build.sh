@@ -5,20 +5,20 @@ set -e
 # Read package details from the control file
 PACKAGE_NAME=$(grep '^Package:' ./debian/control | awk '{print $2}')
 VERSION=$(grep '^Version:' ./debian/control | awk '{print $2}')
-TEMP_DIR="./.temp"
 BUILDS_DIR="./builds"
 OUTPUT="${BUILDS_DIR}/${PACKAGE_NAME}_${VERSION}.deb"
+TEMP_DIR="/dev/shm/${PACKAGE_NAME}_build"
 
-# Clean previous builds
+# Clean previous temp dirs on exit
 trap 'rm -rf "$TEMP_DIR"' EXIT
 mkdir -p "$BUILDS_DIR"
 mkdir -p "$TEMP_DIR/DEBIAN"
 mkdir -p "$TEMP_DIR/usr/local/bin"
 
-# Copy the existing control file
+# Copy the control file
 cp ./debian/control "$TEMP_DIR/DEBIAN/control"
 
-# Copy the script to the build directory
+# Copy the script
 cp src/discord-updater "$TEMP_DIR/usr/local/bin/$PACKAGE_NAME"
 chmod 755 "$TEMP_DIR/usr/local/bin/$PACKAGE_NAME"
 
